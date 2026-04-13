@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Workshop — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --sand:#F4EEE2;--cream:#FAF7F2;--dark:#18130E;--mid:#6B5E50;
+  --light:#D9CFBF;--gold:#B8892A;--gold-lt:#D4A94A;--green:#2A4A35;--green-lt:#3D6B4F;
+  --bg:#FAF7F2;--surface:#fff;--border:#E8E0D0;--text:#18130E;--muted:#6B5E50;
+}
+body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--text);font-size:12px;font-weight:300;line-height:1.6}
+.serif{font-family:'Cormorant Garamond',serif}
+
+/* ── TOP BAR ── */
+.topbar{background:var(--dark);display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:52px;position:sticky;top:0;z-index:50}
+.topbar-logo{font-family:'Cormorant Garamond',serif;font-size:16px;font-style:italic;color:var(--gold-lt)}
+.topbar-nav{display:flex;gap:0}
+.tnb{font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:#5A4E40;padding:0 18px;height:52px;display:flex;align-items:center;cursor:pointer;border:none;background:transparent;border-bottom:2px solid transparent;transition:all 0.15s}
+.tnb:hover{color:var(--sand)}
+.tnb.on{color:var(--gold-lt);border-bottom-color:var(--gold-lt)}
+.topbar-right{display:flex;align-items:center;gap:16px}
+.logout-btn{font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:#3A3028;text-decoration:none}
+.logout-btn:hover{color:var(--sand)}
+.refresh-btn{font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:#3A3028;background:none;border:0.5px solid #2A251F;padding:6px 14px;cursor:pointer;font-family:'DM Mono',monospace}
+.refresh-btn:hover{color:var(--sand);border-color:#5A4E40}
+
+/* ── LAYOUT ── */
+.main{max-width:1100px;margin:0 auto;padding:28px 24px}
+.view{display:none}.view.on{display:block}
+
+/* ── METRICS ── */
+.metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:24px}
+.metric{background:var(--surface);border:0.5px solid var(--border);padding:18px 16px}
+.ml{font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.mv{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:300;color:var(--text);line-height:1}
+.ms{font-size:10px;color:var(--muted);margin-top:4px}
+
+/* ── TWO COL ── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+
+/* ── PANELS ── */
+.panel{background:var(--surface);border:0.5px solid var(--border);padding:20px}
+.panel-title{font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+
+/* ── PROGRESS ── */
+.prog-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.prog-lbl{font-size:11px;width:100px;color:var(--text)}
+.prog-bg{flex:1;height:4px;background:var(--border);overflow:hidden}
+.prog-fill{height:100%;background:var(--green-lt)}
+.prog-n{font-size:11px;color:var(--muted);width:20px;text-align:right}
+
+/* ── GOAL ── */
+.goal-num{font-family:'Cormorant Garamond',serif;font-size:48px;font-weight:300;line-height:1;margin-bottom:6px}
+.goal-bar-wrap{height:6px;background:var(--border);margin-bottom:8px}
+.goal-bar{height:100%;background:var(--green-lt);transition:width 0.5s}
+.goal-sub{font-size:10px;color:var(--muted)}
+
+/* ── PROMO ── */
+.chk-row{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:0.5px solid var(--border)}
+.chk-row:last-child{border-bottom:none}
+.chk-row input{cursor:pointer;margin-top:2px;flex-shrink:0;accent-color:var(--green-lt)}
+.chk-lbl{font-size:11px;color:var(--text);line-height:1.5}
+.chk-lbl.done{text-decoration:line-through;opacity:0.4}
+
+/* ── TOOLBAR ── */
+.toolbar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.toolbar input,.toolbar select{font-size:11px;padding:7px 10px;border:0.5px solid var(--border);background:var(--surface);color:var(--text);font-family:'DM Mono',monospace;font-weight:300;outline:none}
+.toolbar input{flex:1;min-width:140px}
+.toolbar input:focus,.toolbar select:focus{border-color:var(--gold)}
+.btn{font-size:9px;letter-spacing:0.14em;text-transform:uppercase;padding:7px 14px;border:0.5px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-family:'DM Mono',monospace;white-space:nowrap}
+.btn:hover{background:var(--sand)}
+.btn-gold{background:var(--gold-lt);color:var(--dark);border-color:var(--gold-lt)}
+.btn-gold:hover{background:var(--gold)}
+
+/* ── TABLE ── */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:11px}
+thead th{text-align:left;padding:8px 10px;font-size:9px;font-weight:400;color:var(--muted);border-bottom:0.5px solid var(--border);letter-spacing:0.12em;text-transform:uppercase;white-space:nowrap}
+tbody tr{border-bottom:0.5px solid var(--border);cursor:pointer;transition:background 0.1s}
+tbody tr:hover{background:var(--sand)}
+tbody td{padding:10px 10px;vertical-align:middle}
+.empty{text-align:center;padding:40px;color:var(--muted);font-size:12px}
+
+/* ── TAGS / PILLS ── */
+.tag{display:inline-block;font-size:9px;letter-spacing:0.1em;padding:2px 8px;font-weight:400}
+.to{background:#EAF3DE;color:#27500A}.tn{background:#E6F1FB;color:#0C447C}
+.th{background:#FAEEDA;color:#633806}.tr{background:#EEEDFE;color:#3C3489}
+.tf{background:#E1F5EE;color:#085041}.tx{background:#F1EFE8;color:#444441}
+.sp{display:inline-block;font-size:9px;letter-spacing:0.1em;padding:2px 9px}
+.s-new{background:#E6F1FB;color:#0C447C}
+.s-contacted{background:#FAEEDA;color:#633806}
+.s-maybe{background:#EEEDFE;color:#3C3489}
+.s-paid{background:#EAF3DE;color:#27500A}
+.s-no{background:#FAECE7;color:#712B13}
+
+/* ── MODAL ── */
+.modal-bg{position:fixed;inset:0;background:rgba(24,19,14,0.6);display:none;align-items:center;justify-content:center;z-index:100}
+.modal-bg.show{display:flex}
+.modal{background:var(--surface);border:0.5px solid var(--border);padding:32px;width:min(520px,92vw);max-height:85vh;overflow-y:auto}
+.modal h3{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:300;margin-bottom:4px}
+.modal-sub{font-size:10px;color:var(--muted);margin-bottom:24px}
+.kv{display:grid;grid-template-columns:110px 1fr;gap:6px 12px;margin-bottom:16px}
+.kv .k{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);padding-top:1px}
+.kv .v{font-size:12px;color:var(--text)}
+.notes-box{background:var(--sand);border:0.5px solid var(--border);padding:12px;margin-bottom:16px;font-size:11px;line-height:1.7;color:var(--text);white-space:pre-line;max-height:120px;overflow-y:auto}
+.mf{margin-bottom:12px}
+.mf label{display:block;font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.mf select,.mf textarea,.mf input{width:100%;font-family:'DM Mono',monospace;font-size:12px;font-weight:300;padding:9px 10px;border:0.5px solid var(--border);background:var(--surface);color:var(--text);outline:none}
+.mf select:focus,.mf textarea:focus{border-color:var(--gold)}
+.mf textarea{resize:vertical;min-height:60px}
+.modal-acts{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;padding-top:16px;border-top:0.5px solid var(--border)}
+
+/* ── OUTREACH ── */
+.seq-card{border:0.5px solid var(--border);margin-bottom:10px}
+.seq-h{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;background:var(--sand);cursor:pointer}
+.seq-b{display:none;padding:16px}
+.seq-b.open{display:block}
+.msg-step{display:flex;gap:12px;margin-bottom:16px}
+.step-n{font-size:10px;font-weight:400;background:var(--dark);color:var(--sand);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.step-day{font-size:10px;color:var(--muted);margin-bottom:4px;letter-spacing:0.08em}
+.step-msg{font-size:11px;line-height:1.7;color:var(--text);background:var(--sand);padding:10px 12px;white-space:pre-line}
+
+/* ── AI TAB ── */
+.ai-panel{background:var(--surface);border:0.5px solid var(--border);padding:20px;margin-bottom:14px}
+.ai-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.ai-out{margin-top:12px;font-size:12px;line-height:1.7;color:var(--text);background:var(--sand);padding:12px;display:none;white-space:pre-line;border-left:2px solid var(--gold)}
+.ai-out.show{display:block}
+
+/* ── LOADING ── */
+.loading{text-align:center;padding:40px;color:var(--muted);font-size:11px;letter-spacing:0.12em;text-transform:uppercase}
+
+/* ── FROM LANDING BADGE ── */
+.landing-badge{font-size:9px;background:var(--gold-lt);color:var(--dark);padding:1px 6px;letter-spacing:0.08em;margin-left:4px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="topbar-logo">AI Fluency · Dashboard</span>
+  <div class="topbar-nav">
+    <button class="tnb on" onclick="sv('dashboard')">Dashboard</button>
+    <button class="tnb" onclick="sv('crm')">CRM</button>
+    <button class="tnb" onclick="sv('outreach')">Outreach</button>
+    <button class="tnb" onclick="sv('ai')">AI writer</button>
+  </div>
+  <div class="topbar-right">
+    <button class="refresh-btn" onclick="loadSignups()">↻ Refresh</button>
+    <a href="/logout" class="logout-btn">Sign out</a>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- ══ DASHBOARD ══ -->
+<div class="view on" id="v-dashboard">
+  <div class="metrics">
+    <div class="metric"><div class="ml">Total leads</div><div class="mv" id="m-total">—</div><div class="ms">in pipeline</div></div>
+    <div class="metric"><div class="ml">From landing page</div><div class="mv" id="m-landing">—</div><div class="ms">organic signups</div></div>
+    <div class="metric"><div class="ml">Paid seats</div><div class="mv" id="m-paid">—</div><div class="ms">of 12 max</div></div>
+    <div class="metric"><div class="ml">Revenue</div><div class="mv" id="m-rev">—</div><div class="ms">at $50 / seat</div></div>
+    <div class="metric"><div class="ml">Conversion</div><div class="mv" id="m-conv">—</div><div class="ms">leads → paid</div></div>
+  </div>
+
+  <div class="two-col">
+    <div class="panel">
+      <div class="panel-title">Seats goal — 10 target</div>
+      <div id="goal-prog"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Pipeline by status</div>
+      <div id="status-prog"></div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="panel">
+      <div class="panel-title">Signups by segment</div>
+      <div id="seg-prog"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Signups by source</div>
+      <div id="source-prog"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">7-day promo checklist</div>
+    <div id="promo-check"></div>
+  </div>
+</div>
+
+<!-- ══ CRM ══ -->
+<div class="view" id="v-crm">
+  <div class="toolbar">
+    <input type="text" id="crm-q" placeholder="Search name, contact..." oninput="renderCRM()">
+    <select id="crm-st" onchange="renderCRM()">
+      <option value="">All statuses</option>
+      <option value="new">New</option>
+      <option value="contacted">Contacted</option>
+      <option value="maybe">Maybe</option>
+      <option value="paid">Paid</option>
+      <option value="no">Not interested</option>
+    </select>
+    <select id="crm-seg" onchange="renderCRM()">
+      <option value="">All segments</option>
+      <option value="owner">Business owner</option>
+      <option value="nomad">Remote worker</option>
+      <option value="hotel">Hotel / tour</option>
+      <option value="realtor">Real estate</option>
+      <option value="free">Freelancer</option>
+      <option value="other">Other</option>
+    </select>
+    <button class="btn" onclick="exportCSV()">↓ Export CSV</button>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Name</th><th>Contact</th><th>Segment</th><th>Status</th><th>Source</th><th>Language</th><th>Signed up</th><th></th></tr></thead>
+      <tbody id="crm-body"></tbody>
+    </table>
+  </div>
+  <div id="crm-empty" class="empty" style="display:none">No leads yet — signups from your landing page will appear here.</div>
+  <div id="crm-loading" class="loading">Loading signups...</div>
+</div>
+
+<!-- ══ OUTREACH ══ -->
+<div class="view" id="v-outreach">
+  <p style="font-size:11px;color:var(--muted);margin-bottom:16px">Ready-to-send message sequences by segment. Expand, personalise, copy and send.</p>
+  <div id="seq-wrap"></div>
+</div>
+
+<!-- ══ AI WRITER ══ -->
+<div class="view" id="v-ai">
+  <div class="ai-panel">
+    <div class="panel-title">Generate personalised outreach message</div>
+    <div class="ai-grid">
+      <div class="mf"><label>Lead name</label><input type="text" id="ai-name" placeholder="María"></div>
+      <div class="mf"><label>Segment</label>
+        <select id="ai-seg">
+          <option value="business owner">Business owner</option>
+          <option value="remote worker / digital nomad">Remote worker / nomad</option>
+          <option value="hotel or tour operator">Hotel / tour operator</option>
+          <option value="real estate agent">Real estate agent</option>
+          <option value="freelancer">Freelancer</option>
+        </select>
+      </div>
+      <div class="mf"><label>Channel</label>
+        <select id="ai-chan"><option>WhatsApp</option><option>Instagram DM</option><option>Email</option></select>
+      </div>
+      <div class="mf"><label>Tone</label>
+        <select id="ai-tone">
+          <option value="warm and personal">Warm & personal</option>
+          <option value="professional and direct">Professional & direct</option>
+          <option value="casual and friendly">Casual & friendly</option>
+        </select>
+      </div>
+    </div>
+    <div class="mf"><label>Extra context (optional)</label><input type="text" id="ai-ctx" placeholder="e.g. met at farmers market, they mentioned struggling with guest emails..."></div>
+    <button class="btn btn-gold" id="ai-btn" onclick="genMsg()">Generate message</button>
+    <div class="ai-out" id="ai-out"></div>
+  </div>
+
+  <div class="ai-panel">
+    <div class="panel-title">WhatsApp broadcast — ready to copy</div>
+    <div id="broadcast-txt" style="font-size:11px;line-height:1.8;color:var(--text);background:var(--sand);padding:14px;white-space:pre-line">I'm running a live AI workshop in Santa Teresa next week.
+
+2 hours. Hands-on. You'll leave with a real tool you built yourself — no coding, no tech skills needed.
+
+$50 per person · Max 12 spots · English & Spanish
+
+If you've been curious about AI but don't know where to start, this is for you.
+
+Reply here to reserve your spot.</div>
+    <button class="btn" style="margin-top:8px" onclick="navigator.clipboard.writeText(document.getElementById('broadcast-txt').textContent)">Copy message</button>
+  </div>
+</div>
+
+</div>
+
+<!-- ══ EDIT MODAL ══ -->
+<div class="modal-bg" id="modal-edit" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h3 id="modal-name">—</h3>
+    <div class="modal-sub" id="modal-sub">—</div>
+    <div class="kv" id="modal-kv"></div>
+    <div id="modal-notes-wrap" style="display:none">
+      <div class="panel-title">Notes history</div>
+      <div class="notes-box" id="modal-notes"></div>
+    </div>
+    <div class="mf">
+      <label>Update status</label>
+      <select id="e-status">
+        <option value="new">New</option>
+        <option value="contacted">Contacted</option>
+        <option value="maybe">Maybe</option>
+        <option value="paid">Paid ✓</option>
+        <option value="no">Not interested</option>
+      </select>
+    </div>
+    <div class="mf">
+      <label>Add note</label>
+      <textarea id="e-note" placeholder="What happened? Next step?"></textarea>
+    </div>
+    <div class="modal-acts">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-gold" onclick="saveLead()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const segL={owner:'Business owner',nomad:'Remote worker',hotel:'Hotel/tour',realtor:'Real estate',free:'Freelancer',other:'Other'};
+const segC={owner:'to',nomad:'tn',hotel:'th',realtor:'tr',free:'tf',other:'tx'};
+const statL={new:'New',contacted:'Contacted',maybe:'Maybe',paid:'Paid',no:'Not interested'};
+
+const promoTasks=[
+  {id:'p1',text:'Write your 1 promise sentence and post it everywhere'},
+  {id:'p2',text:'Text 10 people personally (individual messages, not broadcast)'},
+  {id:'p3',text:'Post a 60-second demo reel or Instagram story'},
+  {id:'p4',text:'Walk into 2 local businesses for a quick demo'},
+  {id:'p5',text:'Post in Facebook / WhatsApp groups'},
+  {id:'p6',text:'Offer 2 free seats to people who refer a paying friend'},
+  {id:'p7',text:'Send urgency message: "3 spots left" to all maybes'},
+];
+
+let signups = [];
+let editingId = null;
+let promoState = JSON.parse(localStorage.getItem('promo_state')||'{}');
+
+// ── TABS ──
+function sv(id) {
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+  document.querySelectorAll('.tnb').forEach(b=>b.classList.remove('on'));
+  document.getElementById('v-'+id).classList.add('on');
+  const map={dashboard:0,crm:1,outreach:2,ai:3};
+  document.querySelectorAll('.tnb')[map[id]].classList.add('on');
+  if(id==='outreach') renderSeqs();
+}
+
+// ── LOAD SIGNUPS ──
+async function loadSignups() {
+  try {
+    const res = await fetch('/api/signups');
+    if (!res.ok) throw new Error('Failed to load');
+    signups = await res.json();
+    renderAll();
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+function renderAll() { renderDash(); renderCRM(); }
+
+// ── DASHBOARD ──
+function renderDash() {
+  const total = signups.length;
+  const fromLanding = signups.filter(s => s.source === 'landing_page' || !s.source || s.source === 'Instagram' || s.source === 'WhatsApp group').length;
+  const paid = signups.filter(s=>s.status==='paid').length;
+  const rev = paid * 50;
+  const conv = total ? Math.round(paid/total*100) : 0;
+
+  document.getElementById('m-total').textContent = total;
+  document.getElementById('m-landing').textContent = signups.filter(s=>!s.manually_added).length || total;
+  document.getElementById('m-paid').textContent = paid;
+  document.getElementById('m-rev').textContent = '$'+rev;
+  document.getElementById('m-conv').textContent = conv+'%';
+
+  // Goal
+  const pct = Math.min(100, Math.round(paid/10*100));
+  document.getElementById('goal-prog').innerHTML = `
+    <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px">
+      <span class="serif" style="font-size:48px;font-weight:300;line-height:1">${paid}</span>
+      <span style="font-size:11px;color:var(--muted)">of 10 seats sold</span>
+    </div>
+    <div class="goal-bar-wrap"><div class="goal-bar" style="width:${pct}%"></div></div>
+    <div class="goal-sub">${pct}% to goal · ${Math.max(0,10-paid)} seats remaining</div>`;
+
+  // Status breakdown
+  const statuses=['new','contacted','maybe','paid','no'];
+  document.getElementById('status-prog').innerHTML = statuses.map(s=>{
+    const c=signups.filter(l=>l.status===s).length;
+    const p=total?Math.round(c/total*100):0;
+    return `<div class="prog-row"><span class="prog-lbl">${statL[s]}</span><div class="prog-bg"><div class="prog-fill" style="width:${p}%"></div></div><span class="prog-n">${c}</span></div>`;
+  }).join('');
+
+  // Segment breakdown
+  const segs=['owner','nomad','hotel','realtor','free','other'];
+  document.getElementById('seg-prog').innerHTML = segs.map(s=>{
+    const c=signups.filter(l=>l.segment===s).length;
+    const p=total?Math.round(c/total*100):0;
+    return `<div class="prog-row"><span class="prog-lbl">${segL[s]}</span><div class="prog-bg"><div class="prog-fill" style="width:${p}%"></div></div><span class="prog-n">${c}</span></div>`;
+  }).join('');
+
+  // Source breakdown
+  const sources = [...new Set(signups.map(s=>s.source).filter(Boolean))];
+  document.getElementById('source-prog').innerHTML = sources.length ? sources.map(src=>{
+    const c=signups.filter(l=>l.source===src).length;
+    const p=total?Math.round(c/total*100):0;
+    return `<div class="prog-row"><span class="prog-lbl" style="width:120px">${src}</span><div class="prog-bg"><div class="prog-fill" style="width:${p}%"></div></div><span class="prog-n">${c}</span></div>`;
+  }).join('') : '<p style="font-size:11px;color:var(--muted)">No data yet</p>';
+
+  // Promo checklist
+  document.getElementById('promo-check').innerHTML = promoTasks.map(t=>`
+    <div class="chk-row">
+      <input type="checkbox" ${promoState[t.id]?'checked':''} onchange="togglePromo('${t.id}',this.checked)">
+      <span class="chk-lbl ${promoState[t.id]?'done':''}">${t.text}</span>
+    </div>`).join('');
+}
+
+function togglePromo(id,v) { promoState[id]=v; localStorage.setItem('promo_state',JSON.stringify(promoState)); renderDash(); }
+
+// ── CRM ──
+function renderCRM() {
+  const q=(document.getElementById('crm-q').value||'').toLowerCase();
+  const fs=document.getElementById('crm-st').value;
+  const fg=document.getElementById('crm-seg').value;
+  document.getElementById('crm-loading').style.display='none';
+
+  const filtered = signups.filter(l=>{
+    if(fs && l.status!==fs) return false;
+    if(fg && l.segment!==fg) return false;
+    if(q && !l.name.toLowerCase().includes(q) && !(l.contact||'').toLowerCase().includes(q) && !(l.email||'').toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  const body=document.getElementById('crm-body');
+  const empty=document.getElementById('crm-empty');
+  if(!filtered.length){ body.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+
+  body.innerHTML = filtered.map(l=>{
+    const date = l.created_at ? new Date(l.created_at).toLocaleDateString('en-CR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '—';
+    return `<tr onclick="openEdit('${l.id}')">
+      <td><span style="font-weight:400">${l.name}</span></td>
+      <td style="color:var(--muted)">${l.contact||'—'}</td>
+      <td><span class="tag ${segC[l.segment]||'tx'}">${segL[l.segment]||l.segment||'—'}</span></td>
+      <td><span class="sp s-${l.status||'new'}">${statL[l.status||'new']}</span></td>
+      <td style="color:var(--muted)">${l.source||'—'}</td>
+      <td style="color:var(--muted)">${l.language||'—'}</td>
+      <td style="color:var(--muted);white-space:nowrap">${date}</td>
+      <td><button class="btn" style="font-size:9px;padding:3px 10px" onclick="event.stopPropagation();openEdit('${l.id}')">Edit</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── EDIT MODAL ──
+function openEdit(id) {
+  const l = signups.find(s=>s.id===id);
+  if(!l) return;
+  editingId = id;
+  document.getElementById('modal-name').textContent = l.name;
+  document.getElementById('modal-sub').textContent = (segL[l.segment]||l.segment||'') + (l.email?' · '+l.email:'');
+  document.getElementById('e-status').value = l.status||'new';
+  document.getElementById('e-note').value = '';
+  document.getElementById('modal-kv').innerHTML = `
+    <span class="k">Contact</span><span class="v">${l.contact||'—'}</span>
+    <span class="k">Email</span><span class="v">${l.email||'—'}</span>
+    <span class="k">Source</span><span class="v">${l.source||'—'}</span>
+    <span class="k">Language</span><span class="v">${l.language||'—'}</span>
+    <span class="k">Wants to automate</span><span class="v">${l.notes&&l.notes.split('\n')[0]||'—'}</span>`;
+
+  const notesWrap = document.getElementById('modal-notes-wrap');
+  const notesBox = document.getElementById('modal-notes');
+  if(l.notes){ notesWrap.style.display='block'; notesBox.textContent=l.notes; }
+  else { notesWrap.style.display='none'; }
+
+  document.getElementById('modal-edit').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('modal-edit').classList.remove('show');
+  editingId = null;
+}
+
+async function saveLead() {
+  if(!editingId) return;
+  const status = document.getElementById('e-status').value;
+  const note   = document.getElementById('e-note').value.trim();
+  const btn    = document.querySelector('.modal-acts .btn-gold');
+  btn.textContent = 'Saving...'; btn.disabled = true;
+
+  try {
+    const res = await fetch(`/api/signups/${editingId}`, {
+      method: 'PATCH',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ status, note: note||undefined })
+    });
+    if(!res.ok) throw new Error('Save failed');
+    await loadSignups();
+    closeModal();
+  } catch(e) {
+    alert('Could not save. Please try again.');
+  }
+  btn.textContent = 'Save'; btn.disabled = false;
+}
+
+// ── EXPORT CSV ──
+function exportCSV() {
+  const headers = ['Name','Contact','Email','Segment','Status','Source','Language','Notes','Signed up'];
+  const rows = signups.map(l=>[
+    l.name, l.contact||'', l.email||'',
+    segL[l.segment]||l.segment||'', statL[l.status]||l.status||'',
+    l.source||'', l.language||'', (l.notes||'').replace(/\n/g,' | '),
+    l.created_at||''
+  ].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','));
+  const csv = [headers.join(','), ...rows].join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'workshop_signups.csv';
+  a.click();
+}
+
+// ── OUTREACH SEQUENCES ──
+const seqs=[
+  {seg:'Business owners',cls:'to',steps:[
+    {day:'Day 1 — Personal text',msg:`Hey [Name] — I'm running a small AI workshop next week in Santa Teresa. 2 hours, max 12 people, $50. Thought of you. Would you come or know someone who would?`},
+    {day:'Day 3 — Follow-up',msg:`Quick follow-up [Name] — the workshop is filling up. You'd leave with something from your actual work automated before you leave the room. Worth it?`},
+    {day:'Day 6 — Urgency close',msg:`Last call [Name] — 3 spots left for Saturday. $50, 2 hours, you leave with something working. Want me to save you a spot?`}
+  ]},
+  {seg:'Hotel & hospitality',cls:'th',steps:[
+    {day:'Day 1 — WhatsApp or in person',msg:`Hi [Name], I'm running a live AI workshop next week for hospitality teams — how to save 5+ hours a week on guest emails, content & bookings. Max 12 people, $50. Useful for your team?`},
+    {day:'Day 3 — Specific hook',msg:`Just thinking — AI can draft your TripAdvisor responses, write seasonal promotions, and summarise guest feedback in seconds. Showing this live in the workshop. 4 spots open.`},
+    {day:'Day 6 — Final push',msg:`[Name] — last few spots for the AI workshop. I'll demo how one local hotel cut their email time by 3 hours a week. Want to join?`}
+  ]},
+  {seg:'Remote workers & nomads',cls:'tn',steps:[
+    {day:'Day 1 — Instagram DM or WhatsApp',msg:`Hey! Saw you're based in Santa Teresa — I'm running a 2-hour AI workshop next week. Hands-on, no fluff. You'll automate something from your actual work before you leave. $50, 12 spots.`},
+    {day:'Day 3 — Value add',msg:`One thing I'll cover: building a personal AI system that handles your research, drafts & client comms automatically. Saves most remote workers 5–8 hours a week. 4 spots left.`},
+    {day:'Day 6 — Close',msg:`Last 3 spots for Saturday. If you're remote and spending too much time on admin or content, this is specifically for you.`}
+  ]},
+  {seg:'Real estate agents',cls:'tr',steps:[
+    {day:'Day 1 — WhatsApp or personal',msg:`Hi [Name] — running an AI workshop in Santa Teresa next week. Specifically helpful for agents: write listings, follow-up emails, market reports & social content in minutes. 2 hours, $50.`},
+    {day:'Day 3 — Specific value',msg:`In the workshop I'll show how to write a full property listing in 60 seconds and automate your buyer follow-up sequence. 5 spots open.`},
+    {day:'Day 6 — Close',msg:`[Name] — 3 spots left for Saturday. AI is moving fast in real estate. The agents learning this now will have a real edge.`}
+  ]}
+];
+
+function renderSeqs() {
+  document.getElementById('seq-wrap').innerHTML = seqs.map((s,si)=>`
+    <div class="seq-card">
+      <div class="seq-h" onclick="tseq(${si})">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="tag ${s.cls}">${s.seg}</span>
+          <span style="font-size:10px;color:var(--muted)">${s.steps.length}-message sequence</span>
+        </div>
+        <span id="sarr-${si}" style="color:var(--muted);font-size:13px">▸</span>
+      </div>
+      <div class="seq-b" id="sb-${si}">
+        ${s.steps.map((st,i)=>`
+          <div class="msg-step">
+            <div class="step-n">${i+1}</div>
+            <div style="flex:1">
+              <div class="step-day">${st.day}</div>
+              <div class="step-msg">${st.msg}</div>
+              <button class="btn" style="font-size:9px;padding:3px 10px;margin-top:6px" onclick="navigator.clipboard.writeText(\`${st.msg.replace(/`/g,"'")}\`)">Copy</button>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function tseq(i) {
+  const b=document.getElementById('sb-'+i), a=document.getElementById('sarr-'+i);
+  b.classList.toggle('open');
+  a.innerHTML=b.classList.contains('open')?'▾':'▸';
+}
+
+// ── AI WRITER ──
+async function genMsg() {
+  const name=document.getElementById('ai-name').value.trim()||'[Name]';
+  const seg=document.getElementById('ai-seg').value;
+  const chan=document.getElementById('ai-chan').value;
+  const tone=document.getElementById('ai-tone').value;
+  const ctx=document.getElementById('ai-ctx').value.trim();
+  const btn=document.getElementById('ai-btn'), out=document.getElementById('ai-out');
+  btn.disabled=true; btn.textContent='Writing...';
+  out.className='ai-out show'; out.textContent='Generating...';
+
+  try {
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',max_tokens:600,
+        messages:[{role:'user',content:`Write a ${tone} ${chan} outreach message for ${name}, a ${seg}, for a live 2-hour AI workshop in Santa Teresa, Costa Rica. $50, max 12 people, no coding needed, they leave with a working AI tool. ${ctx?'Context: '+ctx:''} Max 6 sentences. Sound human, not marketing. Write only the message.`}]
+      })
+    });
+    const d=await res.json();
+    out.textContent=d.content?.map(b=>b.text||'').join('')||'Could not generate.';
+  } catch(e){ out.textContent='Error connecting to AI. Try again.'; }
+  btn.disabled=false; btn.textContent='Generate message';
+}
+
+// ── INIT ──
+loadSignups();
+renderSeqs();
+</script>
+</body>
+</html>
