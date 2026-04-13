@@ -436,6 +436,7 @@ function renderCRM() {
     return `<tr onclick="openEdit('${l.id}')">
       <td><span style="font-weight:400">${l.name}</span></td>
       <td style="color:var(--muted)">${l.contact||'—'}</td>
+      <td style="color:var(--muted)">${l.email||'—'}</td>
       <td><span class="tag ${segC[l.segment]||'tx'}">${segL[l.segment]||l.segment||'—'}</span></td>
       <td><span class="sp s-${l.status||'new'}">${statL[l.status||'new']}</span></td>
       <td style="color:var(--muted)">${l.source||'—'}</td>
